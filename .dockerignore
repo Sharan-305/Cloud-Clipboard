@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+storage/*.db*
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/temp_chunks/*
+!storage/temp_chunks/.gitkeep
+.git
+.gitignore
+vibehost-deploy.zip

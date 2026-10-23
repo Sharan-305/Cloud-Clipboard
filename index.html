@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Secure cross-device clipboard and resumable file transfer up to 500 MB.">
+  <title>Cloud Clipboard & File Share</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header & Identity -->
+    <header>
+      <div class="identity-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+        </svg>
+        <span>Universal Cross-Device Handoff</span>
+      </div>
+      <h1>Cloud Clipboard</h1>
+      <p>Securely transfer clipboard notes and files up to 500 MB across any device.</p>
+      
+      <div id="server-status-pill" class="server-status-pill" role="button" tabindex="0" title="Click to view or change backend server connection">
+        <span class="status-dot"></span>
+        <span id="server-status-label">Checking backend connection...</span>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs (Apple Segmented Bar) -->
+    <nav class="tabs-container" role="tablist" aria-label="Clipboard Operations">
+      <button type="button" class="tab-btn active" role="tab" id="tab-btn-share" aria-selected="true" aria-controls="tab-share" data-tab="tab-share">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>
+        <span>Share Content</span>
+      </button>
+      <button type="button" class="tab-btn" role="tab" id="tab-btn-access" aria-selected="false" aria-controls="tab-access" data-tab="tab-access">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Retrieve Item</span>
+      </button>
+      <button type="button" class="tab-btn" role="tab" id="tab-btn-recent" aria-selected="false" aria-controls="tab-recent" data-tab="tab-recent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>Recent Shares</span>
+      </button>
+    </nav>
+
+    <!-- TAB 1: Share Content -->
+    <main id="tab-share" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-share">
+      <div class="card">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          <span>New Shared Item</span>
+        </h2>
+
+        <form id="share-form">
+          <!-- Optional Title -->
+          <div class="form-group">
+            <label for="share-title">Title (Optional)</label>
+            <input type="text" id="share-title" class="form-control" placeholder="e.g., Code snippet, Wi-Fi password, or Design assets" autocomplete="off">
+          </div>
+
+          <!-- Text / Code Snippet -->
+          <div class="form-group">
+            <label for="share-text">Clipboard Text / Snippet</label>
+            <textarea id="share-text" class="form-control" placeholder="Paste your text notes, code, commands, or URLs here..."></textarea>
+          </div>
+
+          <!-- File Upload Dropzone (Chunked up to 500 MB) -->
+          <div class="form-group">
+            <label id="dropzone-label">Attached Files (Up to 500 MB each)</label>
+            <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-labelledby="dropzone-label" aria-describedby="dropzone-desc">
+              <input type="file" id="file-input" multiple style="display: none;" aria-hidden="true">
+              <div class="dropzone-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <p><strong>Click to browse</strong> or drag and drop files here</p>
+              <small id="dropzone-desc">Reliable chunked and resumable upload up to 500 MB per file</small>
+            </div>
+            <div id="file-list" class="file-list" role="region" aria-label="Queued Files"></div>
+          </div>
+
+          <!-- Security & Access Limits Grid -->
+          <div class="options-grid">
+            <!-- 6-digit PIN Option -->
+            <div class="option-box">
+              <div class="option-box-header">
+                <label for="enable-pin" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                  <input type="checkbox" id="enable-pin" checked> Numeric PIN
+                </label>
+              </div>
+              <div class="input-with-button">
+                <input type="text" id="pin-input" class="form-control" placeholder="6 digits" maxlength="8" inputmode="numeric">
+                <button type="button" id="gen-pin-btn" class="btn btn-secondary btn-sm" aria-label="Generate new random PIN" title="Generate new PIN">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                </button>
+              </div>
+              <small style="color:var(--text-tertiary); display:block; margin-top:6px;">Short code for quick mobile entry</small>
+            </div>
+
+            <!-- Passcode Option -->
+            <div class="option-box">
+              <div class="option-box-header">
+                <label for="enable-passcode" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                  <input type="checkbox" id="enable-passcode"> Text Passcode
+                </label>
+              </div>
+              <div class="input-with-button">
+                <input type="text" id="passcode-input" class="form-control" placeholder="Passcode" disabled>
+                <button type="button" id="gen-passcode-btn" class="btn btn-secondary btn-sm" aria-label="Generate new random passcode" title="Generate passcode" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                </button>
+              </div>
+              <small style="color:var(--text-tertiary); display:block; margin-top:6px;">Memorable custom phrase</small>
+            </div>
+
+            <!-- Expiry Duration -->
+            <div class="option-box">
+              <div class="option-box-header">
+                <label for="expiry-select">Expiration</label>
+              </div>
+              <select id="expiry-select" class="form-control">
+                <option value="10">10 Minutes</option>
+                <option value="60">1 Hour</option>
+                <option value="360">6 Hours</option>
+                <option value="1440" selected>24 Hours (1 Day)</option>
+                <option value="4320">3 Days</option>
+                <option value="10080">7 Days</option>
+              </select>
+              <small style="color:var(--text-tertiary); display:block; margin-top:6px;">Purged automatically after expiry</small>
+            </div>
+
+            <!-- Download Limits -->
+            <div class="option-box">
+              <div class="option-box-header">
+                <label for="downloads-select">Access Limit</label>
+              </div>
+              <select id="downloads-select" class="form-control">
+                <option value="" selected>Unlimited Downloads</option>
+                <option value="1">1 Download (Burn After Read)</option>
+                <option value="3">3 Downloads</option>
+                <option value="5">5 Downloads</option>
+                <option value="10">10 Downloads</option>
+              </select>
+              <small style="color:var(--text-tertiary); display:block; margin-top:6px;">Self-destructs when limit is hit</small>
+            </div>
+          </div>
+
+          <!-- Submit Action -->
+          <div style="margin-top: 24px;">
+            <button type="submit" id="share-btn" class="btn btn-primary btn-block">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              <span>Create Share & Generate Codes</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <!-- TAB 2: Retrieve Item -->
+    <section id="tab-access" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-access" style="display: none;">
+      <div class="card">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span>Retrieve Shared Item</span>
+        </h2>
+
+        <div class="access-subtabs" role="tablist" aria-label="Access Methods">
+          <button type="button" class="access-subtab-btn active" role="tab" id="subtab-btn-pin" aria-selected="true" aria-controls="subtab-pin" data-subtab="subtab-pin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="8" cy="6" r="1"/><circle cx="12" cy="6" r="1"/><circle cx="16" cy="6" r="1"/><circle cx="8" cy="10" r="1"/><circle cx="12" cy="10" r="1"/><circle cx="16" cy="10" r="1"/>
+            </svg>
+            <span>Numeric PIN</span>
+          </button>
+          <button type="button" class="access-subtab-btn" role="tab" id="subtab-btn-passcode" aria-selected="false" aria-controls="subtab-passcode" data-subtab="subtab-passcode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5M7 14l-4 4 2 2 4-4m5-5a5 5 0 1 0-7-7 5 5 0 0 0 7 7z"/>
+            </svg>
+            <span>Passcode</span>
+          </button>
+          <button type="button" class="access-subtab-btn" role="tab" id="subtab-btn-url" aria-selected="false" aria-controls="subtab-url" data-subtab="subtab-url">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            <span>Link / Token</span>
+          </button>
+        </div>
+
+        <!-- 1. PIN Subtab -->
+        <div id="subtab-pin" class="access-subtab-panel" role="tabpanel" aria-labelledby="subtab-btn-pin">
+          <div id="pin-alert" class="alert alert-danger" style="display: none;" role="alert"></div>
+          <form id="pin-access-form" style="text-align: center;">
+            <p style="color:var(--text-secondary); font-size:0.95rem;">Enter the short numeric PIN provided by the sender:</p>
+            <div class="pin-display-group">
+              <input type="text" id="access-pin-input" class="pin-input-big" placeholder="••••••" maxlength="8" autocomplete="off" inputmode="numeric" autofocus aria-label="Enter 6-digit numeric PIN">
+            </div>
+            <button type="submit" id="pin-submit-btn" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span>Unlock with PIN</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- 2. Passcode Subtab -->
+        <div id="subtab-passcode" class="access-subtab-panel" role="tabpanel" aria-labelledby="subtab-btn-passcode" style="display: none;">
+          <div id="passcode-alert" class="alert alert-danger" style="display: none;" role="alert"></div>
+          <form id="passcode-access-form">
+            <p style="color:var(--text-secondary); font-size:0.95rem; margin-bottom:12px;">Enter the shared text passcode:</p>
+            <div class="form-group">
+              <input type="text" id="access-passcode-input" class="form-control" placeholder="e.g., swift-falcon-42" autocomplete="off" aria-label="Shared passcode">
+            </div>
+            <button type="submit" id="passcode-submit-btn" class="btn btn-primary btn-block">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5M7 14l-4 4 2 2 4-4m5-5a5 5 0 1 0-7-7 5 5 0 0 0 7 7z"/>
+              </svg>
+              <span>Unlock with Passcode</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- 3. URL / Token Subtab -->
+        <div id="subtab-url" class="access-subtab-panel" role="tabpanel" aria-labelledby="subtab-btn-url" style="display: none;">
+          <form id="url-access-form">
+            <p style="color:var(--text-secondary); font-size:0.95rem; margin-bottom:12px;">Paste the full share link or unguessable token:</p>
+            <div class="form-group">
+              <input type="text" id="access-url-input" class="form-control" placeholder="http://localhost:3000/s/... or token" autocomplete="off" aria-label="Share URL or Token">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">
+              <span>Open Share</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Container where retrieved share will render -->
+      <div id="retrieved-item-container" style="display: none;" role="region" aria-label="Retrieved Share Content"></div>
+    </section>
+
+    <!-- TAB 3: Recent Shares -->
+    <section id="tab-recent" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-recent" style="display: none;">
+      <div class="card">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>Shares Created on this Device</span>
+        </h2>
+        <div id="recent-shares-list" role="feed" aria-label="Recent shares history"></div>
+      </div>
+    </section>
+
+    <!-- SUCCESS MODAL: The 4-in-1 Handoff Sheet -->
+    <div id="share-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-share-title">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modal-share-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--color-accent); width:22px; height:22px;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>Share Ready</span>
+          </h2>
+          <button type="button" class="close-btn" id="modal-close-btn" aria-label="Close share dialog">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:20px; height:20px;">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <p style="color: var(--text-secondary); font-size: 0.92rem; margin-bottom: 18px;">
+          Retrieve this item on your phone, tablet, or another computer using any of these 4 methods:
+        </p>
+
+        <div class="share-methods-grid">
+          <!-- Method 1: Shareable URL -->
+          <div class="method-card">
+            <div class="method-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+              <span>Method 1 &middot; Share Link</span>
+            </div>
+            <div class="input-with-button">
+              <input type="text" id="modal-share-url" class="form-control" readonly aria-label="Direct share link">
+              <button type="button" id="modal-copy-url" class="btn btn-primary btn-sm">Copy Link</button>
+            </div>
+          </div>
+
+          <!-- Method 2: Numeric PIN -->
+          <div class="method-card" id="modal-pin-card">
+            <div class="method-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="8" cy="6" r="1"/><circle cx="12" cy="6" r="1"/><circle cx="16" cy="6" r="1"/>
+              </svg>
+              <span>Method 2 &middot; 6-Digit PIN</span>
+            </div>
+            <div class="big-code" id="modal-pin-display" aria-label="Numeric PIN">000000</div>
+            <div style="text-align: center;">
+              <button type="button" id="modal-copy-pin" class="btn btn-secondary btn-sm">Copy PIN</button>
+            </div>
+          </div>
+
+          <!-- Method 3: Text Passcode -->
+          <div class="method-card" id="modal-passcode-card" style="display: none;">
+            <div class="method-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5M7 14l-4 4 2 2 4-4m5-5a5 5 0 1 0-7-7 5 5 0 0 0 7 7z"/>
+              </svg>
+              <span>Method 3 &middot; Text Passcode</span>
+            </div>
+            <div class="input-with-button">
+              <input type="text" id="modal-passcode-display" class="form-control" readonly style="font-weight:600; color:var(--color-light);" aria-label="Text Passcode">
+              <button type="button" id="modal-copy-passcode" class="btn btn-secondary btn-sm">Copy Passcode</button>
+            </div>
+          </div>
+
+          <!-- Method 4: QR Code -->
+          <div class="method-card">
+            <div class="method-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              <span>Method 4 &middot; Scan with Mobile Camera</span>
+            </div>
+            <div class="qr-box">
+              <canvas id="qr-canvas" aria-label="QR Code for mobile scan"></canvas>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" id="qr-toggle-btn" class="btn btn-secondary btn-sm">Switch to PIN QR</button>
+                <button type="button" id="download-qr-btn" class="btn btn-secondary btn-sm">Download QR</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Server Settings Modal -->
+  <div class="modal-overlay" id="server-settings-modal" role="dialog" aria-modal="true" aria-labelledby="server-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:20px; height:20px; color:var(--color-accent);">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+          </svg>
+          <h2 id="server-modal-title" style="font-size:1.15rem; font-weight:600; color:var(--text-primary);">Backend Server Settings</h2>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="server-settings-close" aria-label="Close Settings">&times;</button>
+      </div>
+
+      <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
+        <p style="color:var(--text-secondary); font-size:0.88rem; line-height:1.5;">
+          When hosted statically on VibeHost, this web app can connect to your local or deployed Node.js backend to stream chunked uploads up to 500 MB. Leave blank for default same-origin or standalone browser mode.
+        </p>
+
+        <div id="server-settings-feedback" style="display:none; font-size:0.86rem; padding:10px 14px; border-radius:var(--radius-sm);"></div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="server-url-input">Backend Server URL</label>
+          <input type="url" id="server-url-input" class="form-control" placeholder="e.g. http://localhost:3000 or https://api.yourdomain.com">
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+          <button type="button" id="test-server-btn" class="btn btn-secondary btn-sm">Test Connection</button>
+          <button type="button" id="save-server-btn" class="btn btn-primary btn-sm">Save & Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" role="status" aria-live="polite"></div>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/qr.js"></script>
+  <script src="/js/uploader.js"></script>
+  <script src="/js/access.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
